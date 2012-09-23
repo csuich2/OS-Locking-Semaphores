@@ -45,7 +45,7 @@ struct	pentry	{
 	int	pprio;			/* process priority		*/
 	int	pesp;			/* saved stack pointer		*/
 	STATWORD pirmask;		/* saved interrupt mask		*/
-	int	psem;			/* semaphore if process waiting	*/
+	int	psem;			/* sem/lock if process waiting	*/
 	WORD	pmsg;			/* message sent to this process	*/
 	char	phasmsg;		/* nonzero iff pmsg is valid	*/
 	WORD	pbase;			/* base of run time stack	*/
@@ -59,7 +59,7 @@ struct	pentry	{
 	short	pdevs[2];		/* devices to close upon exit	*/
 	int	fildes[_NFILE];		/* file - device translation	*/
 	int	ppagedev;		/* pageing dgram device		*/
-	int	pwaitret;
+	int	pwaitret;		/* return value when wait over	*/
 };
 
 

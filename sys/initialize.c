@@ -7,6 +7,7 @@
 #include <bufpool.h>
 #include <proc.h>
 #include <sem.h>
+#include <lock.h>
 #include <sleep.h>
 #include <mem.h>
 #include <tty.h>
@@ -32,6 +33,8 @@ struct	pentry	proctab[NPROC]; /* process table			*/
 int	nextproc;		/* next process slot to use in create	*/
 struct	sentry	semaph[NSEM];	/* semaphore table			*/
 int	nextsem;		/* next sempahore slot to use in screate*/
+struct	lentry	locks[NLOCKS];	/* lock table				*/
+int	nextlock;		/* next lock slot to use in lcreate	*/
 struct	qent	q[NQENT];	/* q table (see queue.c)		*/
 int	nextqueue;		/* next slot in q structure to use	*/
 char	*maxaddr;		/* max memory address (set by sizmem)	*/
@@ -132,6 +135,7 @@ LOCAL int sysinit()
 	numproc = 0;			/* initialize system variables */
 	nextproc = NPROC-1;
 	nextsem = NSEM-1;
+	nextlock = NLOCKS-1;
 	nextqueue = NPROC;		/* q[0..NPROC-1] are processes */
 
 	/* initialize free memory list */
@@ -178,6 +182,8 @@ LOCAL int sysinit()
 	}
 
 	rdytail = 1 + (rdyhead=newqueue());/* initialize ready list */
+
+	linit();			/* initialize locks */
 
 #ifdef	MEMMARK
 	_mkinit();			/* initialize memory marking */
