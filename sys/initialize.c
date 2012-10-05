@@ -34,6 +34,7 @@ int	nextproc;		/* next process slot to use in create	*/
 struct	sentry	semaph[NSEM];	/* semaphore table			*/
 int	nextsem;		/* next sempahore slot to use in screate*/
 struct	lentry	locks[NLOCKS];	/* lock table				*/
+int	nextlockdescriptor;	/* increasing unique lock descriptors	*/
 int	nextlock;		/* next lock slot to use in lcreate	*/
 struct	qent	q[NQENT];	/* q table (see queue.c)		*/
 int	nextqueue;		/* next slot in q structure to use	*/
@@ -136,6 +137,7 @@ LOCAL int sysinit()
 	nextproc = NPROC-1;
 	nextsem = NSEM-1;
 	nextlock = NLOCKS-1;
+	nextlockdescriptor = 1;
 	nextqueue = NPROC;		/* q[0..NPROC-1] are processes */
 
 	/* initialize free memory list */

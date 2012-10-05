@@ -25,8 +25,9 @@ int lock(int ldes1, int type, int priority)
 	/* disable interupts */
 	disable(ps);
 
+	int lockid = getIndexForLockDescriptor(ldes1);
 	/* check for a bad lock, free lock or invalid type */
-	if (isbadlock(ldes1) || (lptr= &locks[ldes1])->lstate==LFREE
+	if (isbadlock(lockid) || (lptr= &locks[lockid])->lstate==LFREE
 		|| (type != READ && type != WRITE)) {
 		/* restore interupts */
 		restore(ps);

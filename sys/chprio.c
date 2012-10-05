@@ -30,7 +30,8 @@ SYSCALL chprio(int pid, int newprio)
 	}
 	if (pptr->plock != -1) {
 		updateMaxWaitPriority(pptr->plock);
-		updatePriorityOfProcessesHoldingLock(&locks[pptr->plock]);
+		int lockid = getIndexForLockDescriptor(pptr->plock);
+		updatePriorityOfProcessesHoldingLock(&locks[lockid]);
 	}
 	reinsertIfNecessary(pid, pptr);
 	restore(ps);
@@ -69,7 +70,8 @@ void updatePriorityOfProcessesHoldingLock(struct lentry *lptr)
 
 		if (pptr->plock != -1) {
 			updateMaxWaitPriority(pptr->plock);
-			updatePriorityOfProcessesHoldingLock(&locks[pptr->plock]);
+			int lockid = getIndexForLockDescriptor(pptr->plock);
+			updatePriorityOfProcessesHoldingLock(&locks[lockid]);
 		}
 	}
 }

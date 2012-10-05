@@ -44,14 +44,15 @@ int releaseall(int numlocks, long lockdescriptors)
 		//kprintf2("releasing %d\n", ldes);
 		/* check for a bad lock, free lock and that the calling
  		 * process has acquired this lock */
-		if (isbadlock(ldes) || locks[ldes].lstate == LFREE ||
-		    locks[ldes].llockers[currpid] == FALSE) {
+		int lockid = getIndexForLockDescriptor(ldes);
+		if (isbadlock(lockid) || locks[lockid].lstate == LFREE ||
+		    locks[lockid].llockers[currpid] == FALSE) {
 			/* make sure we return that there was an error */
 			retval = SYSERR;
 			/* continue releasing the other locks */
 			continue;
 		}
-		lptr = &locks[ldes];
+		lptr = &locks[lockid];
 		/* update the number of readers if locked by a reader */
 		lptr->llockers[currpid] = FALSE;
 		if (lptr->llocked == LOCKED_READ) {
@@ -104,8 +105,8 @@ int releaseall(int numlocks, long lockdescriptors)
 				 * all the lockers of this lock use the new max priority of all the
 				 * processes waiting for this lock */
 				updateMaxWaitPriority(ldes);
-				//kprintf2("max wait prio set to: %d\n", locks[ldes].lprio);
-				updatePriorityOfProcessesHoldingLock(&locks[ldes]);
+				//kprintf2("max wait prio set to: %d\n", locks[lockid].lprio);
+				updatePriorityOfProcessesHoldingLock(&locks[lockid]);
 			} else {
 				//kprintf2("no one in queue to receive lock\n");
 				lptr->llocked = UNLOCKED;

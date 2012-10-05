@@ -35,6 +35,9 @@ int lcreate()
 	locks[lock].lnreaders = 0;
 	/* reset the max wait priority */
 	locks[lock].lprio = 0;
+	/* set the unique lock descriptor and bump
+	 * the next one to be used*/
+	locks[lock].ldescriptor = nextlockdescriptor++;
 	/* reset all the locker flags to FALSE */
 	for (i=0; i<NPROC; i++) {
 		locks[lock].llockers[i] = FALSE;
@@ -42,7 +45,7 @@ int lcreate()
 	/* lqhead and lqtail were initialized at system startup */
 	/* restore interupts */
 	restore(ps);
-	return lock;
+	return locks[lock].ldescriptor;
 }
 
 

@@ -21,13 +21,14 @@ int ldelete(int lockdescriptor)
 	disable(ps);
 
 	/* check for a bad lock or free lock */
-	if (isbadlock(lockdescriptor) || locks[lockdescriptor].lstate==LFREE) {
+	int lockid = getIndexForLockDescriptor(lockdescriptor);
+	if (isbadlock(lockid) || locks[lockid].lstate==LFREE) {
 		/* restore interupts */
 		restore(ps);
 		return SYSERR;
 	}
 	/* get the lock entry */
-	lptr = &locks[lockdescriptor];
+	lptr = &locks[lockid];
 	/* set its state to free */
 	lptr->lstate = LFREE;
 	/* set its locked flag to unlocked */

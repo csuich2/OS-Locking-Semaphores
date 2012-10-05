@@ -33,7 +33,8 @@ SYSCALL kill(int pid)
 	if (pptr->plock != -1) {
 		dequeue(pid);
 		updateMaxWaitPriority(pptr->plock);
-		updatePriorityOfProcessesHoldingLock(&locks[pptr->plock]);
+		int lockid = getIndexForLockDescriptor(pptr->plock);
+		updatePriorityOfProcessesHoldingLock(&locks[lockid]);
 		pptr->plock = -1;
 	}
 

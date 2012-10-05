@@ -21,6 +21,7 @@
 #define LUSED	'\02'		/* this lock is used			*/
 
 struct	lentry {		/* lock table entry			*/
+	int	ldescriptor;	/* a unique, temporary descriptor	*/
 	char	lstate;		/* the state LFREE or LUSED		*/
 	char 	llocked;	/* flag indicating the type of lock	*/
 	int	lnreaders;	/* number of readers locking the lock	*/
@@ -33,6 +34,7 @@ struct	lentry {		/* lock table entry			*/
 };
 extern	struct	lentry	locks[];
 extern	int	nextlock;
+extern	int	nextlockdescriptor;
 
 #define	isbadlock(l)	(l<0 || l>=NLOCKS)
 
@@ -44,5 +46,6 @@ int releaseall(int numlocks, long lockdescriptors);
 void updateMaxWaitPriority(int ldes);
 void updateLockersWithPrio(struct lentry *lptr);
 void updatePriorityOfProcessesHoldingLock(struct lentry *lptr);
+int getIndexForLockDescriptor(int lockdescriptor);
 
 #endif
