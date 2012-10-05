@@ -23,3 +23,23 @@ int linit()
 	return OK;
 }
 
+void updateMaxWaitPriority(int ldes)
+{
+	struct	lentry *lptr;
+	int	next;
+	lptr = &locks[ldes];
+	int maxprio = 0;
+	next = q[lptr->lrqhead].qnext;
+	while (q[next].qnext != EMPTY) {
+		int procprio = max(proctab[next].pprio, proctab[next].pinh);
+		maxprio = max(maxprio, procprio);
+		next = q[next].qnext;
+	}
+	next = q[lptr->lwqhead].qnext;
+	while (q[next].qnext != EMPTY) {
+		int procprio = max(proctab[next].pprio, proctab[next].pinh);
+		maxprio = max(maxprio, procprio);
+		next = q[next].qnext;
+	}
+	lptr->lprio = maxprio;
+}

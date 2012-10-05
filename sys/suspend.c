@@ -5,6 +5,7 @@
 #include <proc.h>
 #include <q.h>
 #include <stdio.h>
+#include <math.h>
 
 /*------------------------------------------------------------------------
  *  suspend  --  suspend a process, placing it in hibernation
@@ -30,7 +31,7 @@ SYSCALL	suspend(int pid)
 		pptr->pstate = PRSUSP;
 		resched();
 	}
-	prio = pptr->pprio;
+	prio = max(pptr->pprio, pptr->pinh);
 	restore(ps);
 	return(prio);
 }

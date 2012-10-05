@@ -1,5 +1,8 @@
 /* lock.h */
 
+#include <proc.h>
+#include <q.h>
+
 #ifndef _LOCK_H_
 #define _LOCK_H_
 
@@ -26,6 +29,7 @@ struct	lentry {		/* lock table entry			*/
 	int	lrqhead;	/* q index of head of reader list	*/
 	int	lrqtail;	/* q index of tail of reader list	*/
 	char	llockers[NPROC];/* list of procs locking this lock	*/
+	int	lprio;		/* max priority among all waiting procs	*/
 };
 extern	struct	lentry	locks[];
 extern	int	nextlock;
@@ -37,5 +41,8 @@ int lcreate();
 int ldelete(int lockdescriptor);
 int lock(int ldes, int type, int priority);
 int releaseall(int numlocks, long lockdescriptors);
+void updateMaxWaitPriority(int ldes);
+void updateLockersWithPrio(struct lentry *lptr);
+void updatePriorityOfProcessesHoldingLock(struct lentry *lptr);
 
 #endif

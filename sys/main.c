@@ -11,6 +11,11 @@ int main1();
 int reader(char*, int, int);
 int writer(char*, int, int);
 
+int main2();
+int looper(int);
+int waiter(int);
+int waiter2(int);
+
 int reader1, reader2;
 int writer1;
 int lck1;
@@ -23,7 +28,57 @@ int main()
 {
 	kprintf("\n\nHello World, Xinu lives\n\n");
 	main1();
+	//main2();
 	return 0;
+}
+
+int main2()
+{
+	int lck = lcreate();
+	int loopProc, waitProc, waitProc2;
+	resume(loopProc = create(looper,2000,20,"looper",1,lck));
+	resume(waitProc = create(waiter,2000,50,"waiter",1,lck));
+	sleep(1);
+	resume(waitProc2 = create(waiter2,2000,40,"waiter",1,lck));
+}
+
+int looper(int lck)
+{
+	int i;
+	lock(lck, WRITE, 100);
+	for (i=0; i<5; i++) {
+		sleep(1);
+		kprintf("looper pprio: %d\n", proctab[currpid].pprio);
+		kprintf("looper pinh: %d\n", proctab[currpid].pinh);
+	}
+	releaseall(1, lck);
+	kprintf("lock released by looper\n");
+	sleep(1);
+	lock(lck, WRITE, 100);
+	for (i=0; i<5; i++) {
+		sleep(1);
+		kprintf("looper pprio: %d\n", proctab[currpid].pprio);
+		kprintf("looper pinh: %d\n", proctab[currpid].pinh);
+	}
+	releaseall(1, lck);
+}
+
+int waiter(int lck)
+{
+	int i;
+	lock(lck, WRITE, 100);
+	kprintf("waiter got the lock\n");
+	sleep(2);
+	kprintf2("waiter inherited priority: %d\n", proctab[currpid].pinh);
+	releaseall(1, lck);
+}
+
+int waiter2(int lck)
+{
+	int i;
+	lock(lck, WRITE, 60);
+	kprintf("waiter2 got the lock\n");
+	releaseall(1, lck);
 }
 
 /* test1.c

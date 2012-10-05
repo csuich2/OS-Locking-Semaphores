@@ -33,6 +33,8 @@ int lcreate()
 	locks[lock].llocked = UNLOCKED;
 	/* reset the number of readers to 0 */
 	locks[lock].lnreaders = 0;
+	/* reset the max wait priority */
+	locks[lock].lprio = 0;
 	/* reset all the locker flags to FALSE */
 	for (i=0; i<NPROC; i++) {
 		locks[lock].llockers[i] = FALSE;

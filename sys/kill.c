@@ -4,6 +4,7 @@
 #include <kernel.h>
 #include <proc.h>
 #include <sem.h>
+#include <lock.h>
 #include <mem.h>
 #include <io.h>
 #include <q.h>
@@ -26,6 +27,15 @@ SYSCALL kill(int pid)
 	}
 	if (--numproc == 0)
 		xdone();
+
+	/* If this process was waiting for a lock, we need to remove it from
+	 * the waiting queue and update the max wait priority */
+	if (pptr->plock != -1) {
+		dequeue(pid);
+		updateMaxWaitPriority(pptr->plock);
+		updatePriorityOfProcessesHoldingLock(&locks[pptr->plock]);
+		pptr->plock = -1;
+	}
 
 	dev = pptr->pdevs[0];
 	if (! isbaddev(dev) )

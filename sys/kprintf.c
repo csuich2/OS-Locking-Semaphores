@@ -20,3 +20,8 @@ int kprintf(char *fmt, int args)
 	restore(ps);
         return OK;
 }
+int kprintf2(char *fmt, int args)
+{
+        _doprnt(fmt, &args, (void *)kputc, CONSOLE);
+        return OK;
+}

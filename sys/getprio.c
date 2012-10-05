@@ -4,6 +4,7 @@
 #include <kernel.h>
 #include <proc.h>
 #include <stdio.h>
+#include <math.h>
 
 /*------------------------------------------------------------------------
  * getprio -- return the scheduling priority of a given process
@@ -20,5 +21,5 @@ SYSCALL getprio(int pid)
 		return(SYSERR);
 	}
 	restore(ps);
-	return(pptr->pprio);
+	return(max(pptr->pprio, pptr->pinh));
 }
