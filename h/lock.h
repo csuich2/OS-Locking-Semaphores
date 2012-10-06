@@ -43,6 +43,7 @@ int lcreate();
 int ldelete(int lockdescriptor);
 int lock(int ldes, int type, int priority);
 int releaseall(int numlocks, long lockdescriptors);
+void releaseallforprocess(int pid);
 void updateMaxWaitPriority(int ldes);
 void updateLockersWithPrio(struct lentry *lptr);
 void updatePriorityOfProcessesHoldingLock(struct lentry *lptr);

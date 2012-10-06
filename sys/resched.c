@@ -4,7 +4,6 @@
 #include <kernel.h>
 #include <proc.h>
 #include <q.h>
-#include <math.h>
 
 unsigned long currSP;	/* REAL sp of current process */
 extern int ctxsw(int, int, int, int);

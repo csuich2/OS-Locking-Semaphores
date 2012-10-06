@@ -6,7 +6,6 @@
 #include <q.h>
 #include <lock.h>
 #include <stdio.h>
-#include <math.h>
 
 void updateMaxWaitPrio(struct pentry *pptr, struct lentry *lptr);
 void updateProcessForWaiting(struct pentry *pptr, int ldes);

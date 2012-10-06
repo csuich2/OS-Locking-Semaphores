@@ -5,7 +5,6 @@
 #include <proc.h>
 #include <q.h>
 #include <stdio.h>
-#include <math.h>
 
 /*------------------------------------------------------------------------
  *  suspend  --  suspend a process, placing it in hibernation

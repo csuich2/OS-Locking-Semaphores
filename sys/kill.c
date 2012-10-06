@@ -28,15 +28,8 @@ SYSCALL kill(int pid)
 	if (--numproc == 0)
 		xdone();
 
-	/* If this process was waiting for a lock, we need to remove it from
-	 * the waiting queue and update the max wait priority */
-	if (pptr->plock != -1) {
-		dequeue(pid);
-		updateMaxWaitPriority(pptr->plock);
-		int lockid = getIndexForLockDescriptor(pptr->plock);
-		updatePriorityOfProcessesHoldingLock(&locks[lockid]);
-		pptr->plock = -1;
-	}
+	/* Release any locks this process is still holding */
+	releaseallforprocess(pid);
 
 	dev = pptr->pdevs[0];
 	if (! isbaddev(dev) )
@@ -56,7 +49,19 @@ SYSCALL kill(int pid)
 	case PRCURR:	pptr->pstate = PRFREE;	/* suicide */
 			resched();
 
-	case PRWAIT:	semaph[pptr->psem].semcnt++;
+	case PRWAIT:	if (semaph[pptr->psem].sstate == SUSED) {
+				semaph[pptr->psem].semcnt++;
+			} else if (locks[getIndexForLockDescriptor(pptr->plock)].lstate == LUSED) {
+				/* If this process was waiting for a lock, we need to remove it from
+				 * the waiting queue and update the max wait priority */
+				if (pptr->plock != -1) {
+					dequeue(pid);
+					updateMaxWaitPriority(pptr->plock);
+					int lockid = getIndexForLockDescriptor(pptr->plock);
+					updatePriorityOfProcessesHoldingLock(&locks[lockid]);
+					pptr->plock = -1;
+				}
+			}
 
 	case PRREADY:	dequeue(pid);
 			pptr->pstate = PRFREE;
