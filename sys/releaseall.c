@@ -14,7 +14,7 @@ void releaselock(int pid, int lockid);
  * releaseall  --  releases all specified locks for the current process 
  *------------------------------------------------------------------------
  */
-int releaseall(int numlocks, long lockdescriptors)
+int releaseall(int numlocks, int ldes1, ...)
 {
 	STATWORD ps;
 	int i;
@@ -36,7 +36,7 @@ int releaseall(int numlocks, long lockdescriptors)
 	//kprintf2("%d released %d locks\n", currpid, numlocks);
 	for (i=0; i<numlocks; i++) {
 		/* get the next lock descriptor from the argument list */
-		ldes = *(&lockdescriptors + i);
+		ldes = *(&ldes1 + i);
 		//kprintf2("releasing %d\n", ldes);
 		/* check for a bad lock, free lock and that the calling
  		 * process has acquired this lock */
@@ -77,7 +77,7 @@ void releaselock(int releasingpid, int lockid)
 	int	writeprio;
 	int	pid;
 
-	kprintf("releasing lock id: %d, des: %d from proc %d\n", lockid, locks[lockid].ldescriptor, releasingpid);
+	//kprintf("releasing lock id: %d, des: %d from proc %d\n", lockid, locks[lockid].ldescriptor, releasingpid);
 
 	lptr = &locks[lockid];
 	/* update the number of readers if locked by a reader */
