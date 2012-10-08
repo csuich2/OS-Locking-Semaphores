@@ -20,10 +20,13 @@ void test_basic_priority_inheritance();
 void test_complex_prio_inheritance();
 void test_basic_lock_deletion();
 void test_rw_and_inheritance();
+void test_multiple_lock_inheritance();
+void test_multiple_lock_inheritance_and_kill();
 
 int reader(int sleeplen, int lck, int lockprio);
 int writer(int sleeplen, int lck, int lockprio);
 int doublewriter(int sleeplen, int lck1, int lck2, int lockprio);
+int twowriter(int sleep1len, int sleep2len, int lck1, int lck2, int lockprio);
 int readerdeleter(int sleeplen, int lck, int lockprio);
 
 int getcurrenteffectiveprio();
@@ -41,8 +44,10 @@ int main(){
 	//test_basic_priority_inheritance();
 	//test_complex_prio_inheritance();
 	//test_basic_lock_deletion();
-	test_rw_and_inheritance();
-	
+	//test_rw_and_inheritance();
+	//test_multiple_lock_inheritance();
+	test_multiple_lock_inheritance_and_kill();
+
 	return 0;
 	
 }
@@ -243,6 +248,94 @@ void test_rw_and_inheritance() {
 	kprintf("\n\n");
 }
 
+void test_multiple_lock_inheritance() {
+
+	// Function variables
+	int multwriter;
+	int writer1, writer2;
+	int reader1, reader2;
+
+	// Create 2 locks
+	int lck1 = lcreate();
+	int lck2 = lcreate();
+
+	// Print expected output
+	kprintf("test_multiple_lock_inheritance expected: TW1(20)-w#1 TW1(20)-h#1 TW1(20)-w#2 TW1(20)-h#2 W1(30)-w R1(40)-w R2(50)-w W2(60)-w TW1(60) TW1(40) TW1(40)-r#1-#2 W1(40)-h R2(35)-h W1(40)-r R1(40)-h R2(35)-r W2(35)-h R1(40)-r W2(35)-R\n");
+	kprintf("test_multiple_lock_inheritance actual  : ");
+
+	// Start processes
+	resume(multwriter = create(twowriter, 2000, 20, "TW1", 5, 2, 2, lck1, lck2, 60));
+	resume(writer1   = create(writer,    2000, 30,  "W1", 3, 1, lck1, 50));
+	resume(reader1   = create(reader,    2000, 40,  "R1", 3, 1, lck1, 40));
+	resume(reader2   = create(reader,    2000, 50,  "R2", 3, 1, lck2, 50));
+	resume(writer2   = create(writer,    2000, 60,  "W2", 3, 1, lck2, 40));
+	
+	// Wait for the two writer to wake up and print
+	sleep(2);
+
+	// Change reader2 and writer2's prio so twowriter inherits from reader1
+	chprio(reader2, 25);
+	chprio(writer2, 35);
+
+	// Wait until we can be sure processes are finished
+	sleep(7);
+
+	// Clean up
+	kill(multwriter);
+	kill(writer1);
+	kill(reader1);
+	kill(reader2);
+	kill(writer2);
+	ldelete(lck1);
+	ldelete(lck2);
+	kprintf("\n\n");
+}
+
+void test_multiple_lock_inheritance_and_kill() {
+
+	// Function variables
+	int multwriter;
+	int writer1, writer2;
+	int reader1, reader2;
+
+	// Create 2 locks
+	int lck1 = lcreate();
+	int lck2 = lcreate();
+
+	// Print expected output
+	kprintf("test_multiple_lock_inheritance expected: TW1(20)-w#1 TW1(20)-h#1 TW1(20)-w#2 TW1(20)-h#2 W1(30)-w R1(50)-w R2(40)-w W2(60)-w TW1(50) TW1(40) TW1(40)-r#1-#2 W1(30)-h R2(40)-h W1(30)-r R2(40)-r\n");
+	kprintf("test_multiple_lock_inheritance actual  : ");
+
+	// Start processes
+	resume(multwriter = create(twowriter, 2000, 20, "TW1", 5, 2, 2, lck1, lck2, 60));
+	resume(writer1   = create(writer,    2000, 30,  "W1", 3, 1, lck1, 50));
+	resume(reader1   = create(reader,    2000, 50,  "R1", 3, 1, lck1, 40));
+	resume(reader2   = create(reader,    2000, 40,  "R2", 3, 1, lck2, 50));
+	resume(writer2   = create(writer,    2000, 60,  "W2", 3, 1, lck2, 40));
+
+	// Kill writer2 so multwriter inherits prio from reader1
+	kill(writer2);
+	
+	// Wait for the two writer to wake up and print
+	sleep(2);
+
+	// Kill reader1 so multwriter inherits prio from reader2
+	kill(reader1);
+
+	// Wait until we can be sure processes are finished
+	sleep(7);
+
+	// Clean up
+	kill(multwriter);
+	kill(writer1);
+	kill(reader1);
+	kill(reader2);
+	kill(writer2);
+	ldelete(lck1);
+	ldelete(lck2);
+	kprintf("\n\n");
+}
+
 // ==============================================
 // Process functions
 // ==============================================
@@ -299,6 +392,29 @@ int doublewriter(int sleeplen, int lck1, int lck2, int lockprio){
 	}
 	else
 		kprintf("%s(%d)-e#1(%d) ", getcurrentname(), getcurrenteffectiveprio(), lockret);
+}
+
+int twowriter(int sleep1len, int sleep2len, int lck1, int lck2, int lockprio) {
+	kprintf("%s(%d)-w#1 ", getcurrentname(), getcurrenteffectiveprio());
+	int lockret = lock(lck1, WRITE, lockprio);
+	if (lockret == SYSERR) {
+		kprintf("%s(%d)-e#1(%d) ", getcurrentname(), getcurrenteffectiveprio(), lockret);
+	} else {
+		kprintf("%s(%d)-h#1 ", getcurrentname(), getcurrenteffectiveprio());
+		kprintf("%s(%d)-w#2 ", getcurrentname(), getcurrenteffectiveprio());
+		lockret = lock(lck2, WRITE, lockprio);
+		if (lockret == SYSERR) {
+			kprintf("%s(%d)-e#2(%d) ", getcurrentname(), getcurrenteffectiveprio(), lockret);
+		} else {
+			kprintf("%s(%d)-h#2 ", getcurrentname(), getcurrenteffectiveprio());
+			sleep(sleep1len);
+			kprintf("%s(%d) ", getcurrentname(), getcurrenteffectiveprio());
+			sleep(sleep2len);
+			kprintf("%s(%d) ", getcurrentname(), getcurrenteffectiveprio());
+			kprintf("%s(%d)-r#1-#2 ", getcurrentname(), getcurrenteffectiveprio());
+			releaseall(2, lck1, lck2);
+		}
+	}
 }
 
 // Holds a lock for reading and then deletes it
