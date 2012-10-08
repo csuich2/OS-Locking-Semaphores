@@ -27,8 +27,8 @@ int lck1;
 int main()
 {
 	kprintf("\n\nHello World, Xinu lives\n\n");
-	main1();
-	//main2();
+	//main1();
+	main2();
 	return 0;
 }
 

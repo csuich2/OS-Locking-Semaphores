@@ -19,6 +19,7 @@ void test_basic_lock_priority();
 void test_basic_priority_inheritance();
 void test_complex_prio_inheritance();
 void test_basic_lock_deletion();
+void test_rw_and_inheritance();
 
 int reader(int sleeplen, int lck, int lockprio);
 int writer(int sleeplen, int lck, int lockprio);
@@ -39,7 +40,8 @@ int main(){
 	//test_basic_lock_priority();
 	//test_basic_priority_inheritance();
 	//test_complex_prio_inheritance();
-	test_basic_lock_deletion();
+	//test_basic_lock_deletion();
+	test_rw_and_inheritance();
 	
 	return 0;
 	
@@ -206,6 +208,39 @@ void test_basic_lock_deletion(){
 	kill(writer2);
 	kprintf("\n\n");
 	
+}
+
+void test_rw_and_inheritance() {
+	
+	// Function variables
+	int reader1, reader2, reader3;
+	int writer1, writer2;
+
+	// Create 1 lock
+	int lck1 = lcreate();
+
+	// Print expected output
+	kprintf("test_rw_and_inheritance expected: W1(20)-w W1(20)-h R1(30)-w R2(35)-w W2(20)-w R3(50)-w W1(50)-r R1(50)-h R2(50)-h R1(50)-r R2(50)-r W2(50)-h W2(50)-r R3(50)-h R3(50)-r\n");
+	kprintf("test_rw_and_inheritance actual  : ");
+
+	// Start processes
+	resume(writer1 = create(writer, 2000, 20, "W1", 3, 3, lck1, 50));
+	resume(reader1 = create(reader, 2000, 30, "R1", 3, 1, lck1, 40));
+	resume(reader2 = create(reader, 2000, 35, "R2", 3, 2, lck1, 30));
+	resume(writer2 = create(writer, 2000, 20, "W2", 3, 1, lck1, 20));
+	resume(reader3 = create(reader, 2000, 50, "R3", 3, 1, lck1, 10));
+
+	// Wait until we can be sure processes are finished
+	sleep(15);
+	
+	// Clean up
+	kill(writer1);
+	kill(reader1);
+	kill(reader2);
+	kill(writer2);
+	kill(reader3);
+	ldelete(lck1);
+	kprintf("\n\n");
 }
 
 // ==============================================

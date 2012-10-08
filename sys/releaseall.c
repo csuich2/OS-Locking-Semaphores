@@ -33,11 +33,9 @@ int releaseall(int numlocks, int ldes1, ...)
 
 	/* initialize the variable list of arguments */
 	/* loop over each lock descriptor */
-	//kprintf2("%d released %d locks\n", currpid, numlocks);
 	for (i=0; i<numlocks; i++) {
 		/* get the next lock descriptor from the argument list */
 		ldes = *(&ldes1 + i);
-		//kprintf2("releasing %d\n", ldes);
 		/* check for a bad lock, free lock and that the calling
  		 * process has acquired this lock */
 		int lockid = getIndexForLockDescriptor(ldes);
@@ -55,19 +53,25 @@ int releaseall(int numlocks, int ldes1, ...)
 	 * max priority of all the processes waiting on its remainging locks */
 	updateProcessPriority(currpid);
 
+	/* reschedule the processor since the waiting queue may have changed */
+	resched();
+
 	/* restore interupts */
 	restore(ps);
 	return retval;
 }
 
-void releaseallforprocess(int pid)
+int releaseallforprocess(int pid)
 {
 	int	i;
+	int	heldLock = FALSE;
 	for (i=0; i<NLOCKS; i++) {
 		if (locks[i].llockers[pid] == TRUE) {
+			heldLock = TRUE;
 			releaselock(pid, i);
 		}
 	}
+	return heldLock;
 }
 
 void releaselock(int releasingpid, int lockid)
@@ -76,8 +80,6 @@ void releaselock(int releasingpid, int lockid)
 	int	readprio;
 	int	writeprio;
 	int	pid;
-
-	//kprintf("releasing lock id: %d, des: %d from proc %d\n", lockid, locks[lockid].ldescriptor, releasingpid);
 
 	lptr = &locks[lockid];
 	/* update the number of readers if locked by a reader */
@@ -94,14 +96,12 @@ void releaselock(int releasingpid, int lockid)
 		writeprio = lastkey(lptr->lwqtail);
 		/* if they're both MININT, then there is nothing on the queue,
 		 * so only continue if one of them is not MININT */
-		//kprintf2("choosing who to give lock %d to\n", ldes);
 		if (readprio != MININT || writeprio != MININT) {
 			/* only has readers, so let all readers have the lock */
 			if (readprio != MININT && writeprio == MININT) {
 				lptr->llocked = LOCKED_READ;
 				while ((pid=getlast(lptr->lrqtail)) != EMPTY) {
 					ready(pid, RESCHNO);
-					//kprintf2("lock given to %d\n", pid);
 					proctab[pid].plock = -1;
 					lptr->llockers[pid] = TRUE;
 					lptr->lnreaders++;
@@ -109,8 +109,7 @@ void releaselock(int releasingpid, int lockid)
 			/* let the top writer go if there are only writers waiting
 			 * or if the top writer has the highest priority */
 			} else if (readprio == MININT || writeprio >= readprio) {
-			pid = getlast(lptr->lwqtail);
-				//kprintf2("lock given to %d\n", pid);
+				pid = getlast(lptr->lwqtail);
 				ready(pid, RESCHNO);
 				proctab[pid].plock = -1;
 				lptr->llockers[pid] = TRUE;
@@ -122,7 +121,6 @@ void releaselock(int releasingpid, int lockid)
 				while (lastkey(lptr->lrqtail) > writeprio &&
 				       ((pid=getlast(lptr->lrqtail)) != EMPTY)) {
 					ready(pid, RESCHNO);
-					//kprintf2("lock given to %d\n", pid);
 					proctab[pid].plock = -1;
 					lptr->llockers[pid] = TRUE;
 					lptr->lnreaders++;
@@ -132,10 +130,8 @@ void releaselock(int releasingpid, int lockid)
 			 * all the lockers of this lock use the new max priority of all the
 			 * processes waiting for this lock */
 			updateMaxWaitPriority(locks[lockid].ldescriptor);
-			//kprintf2("max wait prio set to: %d\n", locks[lockid].lprio);
 			updatePriorityOfProcessesHoldingLock(&locks[lockid]);
 		} else {
-			//kprintf2("no one in queue to receive lock\n");
 			lptr->llocked = UNLOCKED;
 		}
 	}

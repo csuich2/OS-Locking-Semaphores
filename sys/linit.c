@@ -28,6 +28,8 @@ void updateMaxWaitPriority(int ldes)
 	struct	lentry *lptr;
 	int	next;
 	int lockid = getIndexForLockDescriptor(ldes);
+	if (lockid == SYSERR)
+		return;
 	lptr = &locks[lockid];
 	int maxprio = 0;
 	next = q[lptr->lrqhead].qnext;

@@ -39,12 +39,14 @@ int ldelete(int lockdescriptor)
 		while ((pid=getfirst(lptr->lrqhead)) != EMPTY) {
 			/* update the wait return to deleted */
 			proctab[pid].pwaitret = DELETED;
+			proctab[pid].plock = -1;
 			/* put the process back on the ready queue */
 			ready(pid, RESCHNO);
 		}
 		/* same as above, but for the writer queue */
 		while ((pid=getfirst(lptr->lwqhead)) != EMPTY) {
 			proctab[pid].pwaitret = DELETED;
+			proctab[pid].plock = -1;
 			ready(pid, RESCHNO);
 		}
 		/* reschedule with newly readied processes */

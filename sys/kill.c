@@ -19,6 +19,7 @@ SYSCALL kill(int pid)
 	STATWORD ps;    
 	struct	pentry	*pptr;		/* points to proc. table for pid*/
 	int	dev;
+	int	shouldResched = FALSE;
 
 	disable(ps);
 	if (isbadpid(pid) || (pptr= &proctab[pid])->pstate==PRFREE) {
@@ -29,7 +30,7 @@ SYSCALL kill(int pid)
 		xdone();
 
 	/* Release any locks this process is still holding */
-	releaseallforprocess(pid);
+	shouldResched = releaseallforprocess(pid);
 
 	dev = pptr->pdevs[0];
 	if (! isbaddev(dev) )
@@ -51,10 +52,11 @@ SYSCALL kill(int pid)
 
 	case PRWAIT:	if (semaph[pptr->psem].sstate == SUSED) {
 				semaph[pptr->psem].semcnt++;
-			} else if (locks[getIndexForLockDescriptor(pptr->plock)].lstate == LUSED) {
+			} else if (pptr->plock != -1) {
 				/* If this process was waiting for a lock, we need to remove it from
 				 * the waiting queue and update the max wait priority */
-				if (pptr->plock != -1) {
+				int lockid = getIndexForLockDescriptor(pptr->plock);
+				if (lockid != SYSERR) {
 					dequeue(pid);
 					updateMaxWaitPriority(pptr->plock);
 					int lockid = getIndexForLockDescriptor(pptr->plock);
@@ -72,6 +74,8 @@ SYSCALL kill(int pid)
 						/* fall through	*/
 	default:	pptr->pstate = PRFREE;
 	}
+	if (shouldResched)
+		resched();
 	restore(ps);
 	return(OK);
 }

@@ -60,11 +60,8 @@ int lock(int ldes1, int type, int priority)
 		/* reschedule since this process is now blocked */
 		/* a context switch should happen here */
 		resched();
-		/* when we get here, this reader has the lock now, so: */
-		/* bump the number of readers */
-		lptr->lnreaders++;
-		/* set this processes locker flag to TRUE */
-		lptr->llockers[currpid] = TRUE;
+		/* the number of readers and locker flag will be set when
+		 * releaselock(...) is called in releaseall.c */
 		/* restore interupts */
 		restore(ps);
 		/* return the wait return value */
